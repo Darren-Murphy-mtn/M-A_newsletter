@@ -1,0 +1,53 @@
+name: M&A Newsletter Pipeline
+
+on:
+  schedule:
+    # Run every day at 8:00 AM UTC (adjust timezone as needed)
+    - cron: '0 8 * * *'
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  send-newsletter:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Upload Supabase contacts to Resend
+      env:
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+        RESEND_AUDIENCE_ID: ${{ secrets.RESEND_AUDIENCE_ID }}
+      run: |
+        python upload_to_resend.py
+    
+    - name: Run M&A Newsletter Pipeline
+      env:
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+        RESEND_AUDIENCE_ID: ${{ secrets.RESEND_AUDIENCE_ID }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
+        SENDER_NAME: ${{ secrets.SENDER_NAME }}
+      run: |
+        python ma_main.py
+    
+    - name: Upload logs (if failure)
+      if: failure()
+      uses: actions/upload-artifact@v3
+      with:
+        name: pipeline-logs
+        path: '*.log'

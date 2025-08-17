@@ -1,0 +1,9 @@
+{
+  "name": "ma-newsletter-portfolio-integration",
+  "version": "1.0.0",
+  "description": "M&A Newsletter signup integration for portfolio website",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.38.0"
+  },
+  "installation": "npm install @supabase/supabase-js"
+}

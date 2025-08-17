@@ -1,0 +1,126 @@
+// Newsletter Unsubscribe Component for Your Portfolio
+// Add this to your portfolio: pages/newsletter/unsubscribe.js
+
+import { useState } from 'react';
+import Head from 'next/head';
+import { supabase } from '../../lib/supabase';
+
+export default function NewsletterUnsubscribe() {
+  const [email, setEmail] = useState('');
+  const [status, setStatus] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleUnsubscribe = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setStatus('');
+
+    try {
+      const { error } = await supabase
+        .from('ma_subscribers')
+        .delete()
+        .eq('email', email.toLowerCase().trim());
+
+      if (error) {
+        throw error;
+      }
+
+      setStatus('success');
+      setEmail('');
+    } catch (error) {
+      console.error('Unsubscribe error:', error);
+      setStatus('An error occurred. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <>
+      <Head>
+        <title>Unsubscribe - M&A Newsletter</title>
+        <meta name="description" content="Unsubscribe from M&A newsletter" />
+      </Head>
+      
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center p-4">
+        <div className="max-w-lg w-full bg-white rounded-lg shadow-xl p-8">
+          
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+              </svg>
+            </div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Unsubscribe</h1>
+            <p className="text-gray-600 text-lg">
+              Sorry to see you go! You can resubscribe anytime.
+            </p>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleUnsubscribe} className="space-y-6">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                Email Address
+              </label>
+              <input
+                type="email"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-gray-900"
+                placeholder="your@email.com"
+                disabled={loading}
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-semibold py-3 px-6 rounded-lg transition duration-200"
+            >
+              {loading ? 'Processing...' : 'Unsubscribe'}
+            </button>
+          </form>
+
+          {/* Success Message */}
+          {status === 'success' && (
+            <div className="mt-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
+              <div className="flex items-center">
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                ✅ Successfully unsubscribed from M&A Newsletter.
+              </div>
+              <p className="mt-2 text-sm">
+                You can resubscribe anytime at{' '}
+                <a href="/newsletter/signup" className="underline hover:text-green-600">
+                  the signup page
+                </a>.
+              </p>
+            </div>
+          )}
+
+          {/* Error Message */}
+          {status && status !== 'success' && (
+            <div className="mt-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+              {status}
+            </div>
+          )}
+
+          {/* Footer */}
+          <div className="mt-8 text-center">
+            <a 
+              href="/newsletter/signup" 
+              className="text-blue-600 hover:text-blue-700 underline"
+            >
+              ← Back to signup
+            </a>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}

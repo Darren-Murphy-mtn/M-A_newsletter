@@ -1,0 +1,18 @@
+# Development/Testing Files
+*.log
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+newsletter_preview.html
+preview_newsletter.py
+test_*.py
+*_backup.py
+*_old.py
+*_simple.py
+fix_*.py
+.env
+.env.backup
+.DS_Store

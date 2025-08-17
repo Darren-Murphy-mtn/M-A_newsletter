@@ -1,0 +1,16 @@
+# M&A Newsletter - Essential Dependencies Only
+
+# Core dependencies
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+python-dotenv>=1.0.0
+
+# OpenAI for summarization (compatible version)
+openai==0.28
+
+# Supabase for subscriber management
+supabase>=2.3.0
+
+# Resend for email sending
+resend>=2.13.0
