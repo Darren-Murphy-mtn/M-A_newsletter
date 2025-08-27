@@ -1,3 +1,4 @@
+
 name: M&A Newsletter Pipeline
 
 on:
@@ -31,7 +32,7 @@ jobs:
         RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
         RESEND_AUDIENCE_ID: ${{ secrets.RESEND_AUDIENCE_ID }}
       run: |
-        python upload_to_resend.py
+        python3 upload_to_resend.py
     
     - name: Run M&A Newsletter Pipeline
       env:
@@ -43,11 +44,11 @@ jobs:
         SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
         SENDER_NAME: ${{ secrets.SENDER_NAME }}
       run: |
-        python ma_main.py
+        python3 ma_main.py
     
     - name: Upload logs (if failure)
       if: failure()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: pipeline-logs
         path: '*.log'

@@ -4,7 +4,7 @@ Standalone component that takes deals and creates professional summaries using O
 """
 
 import os
-import openai
+from openai import OpenAI
 import logging
 from typing import List, Dict, Optional
 from dataclasses import dataclass, asdict
@@ -66,7 +66,7 @@ class DealSummarizer:
                 "OpenAI API key not provided. Set OPENAI_API_KEY environment variable or pass api_key parameter.")
 
         # Configure OpenAI client
-        openai.api_key = self.api_key
+        self.client = OpenAI(api_key=self.api_key)
 
         # Summarization settings
         self.model = "gpt-4"  # Use gpt-3.5-turbo for cost efficiency if needed
@@ -125,7 +125,7 @@ class DealSummarizer:
 
         try:
             # Call OpenAI API
-            response = openai.ChatCompletion.create(
+            response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
                     {
