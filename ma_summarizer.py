@@ -269,10 +269,10 @@ Requirements:
 
         # Basic summary based on deal type
         deal_type_summaries = {
-            'VC': f"Venture capital funding round for growth and expansion.",
-            'M&A': f"Merger and acquisition transaction to combine business operations.",
-            'IPO': f"Initial public offering to raise capital through public markets.",
-            'IB': f"Investment banking transaction for capital raising or advisory services."
+            'VC': f"Venture capital investment to fuel company growth and expansion.",
+            'M&A': f"Merger and acquisition transaction combining business operations.",
+            'IPO': f"Initial public offering bringing company to public markets.",
+            'IB': f"Investment banking transaction involving capital markets advisory."
         }
 
         fallback_summary = deal_type_summaries.get(deal.deal_type,
@@ -372,11 +372,19 @@ Requirements:
 
         total_deals = len(deals)
         deal_types = list(set(deal.deal_type for deal in deals))
-
+        
+        # Create more inclusive headlines
         if len(deal_types) == 1:
-            return f"Top {total_deals} {deal_types[0]} Deals This Week"
+            deal_type_names = {
+                'VC': 'Venture Capital',
+                'M&A': 'M&A',
+                'IPO': 'IPO',
+                'IB': 'Investment Banking'
+            }
+            deal_name = deal_type_names.get(deal_types[0], deal_types[0])
+            return f"Top {total_deals} {deal_name} Deals This Week"
         else:
-            return f"Weekly Finance Roundup: {total_deals} Key Deals Across {', '.join(deal_types)}"
+            return f"Weekly Financial Markets Roundup: {total_deals} Key Deals Across Multiple Sectors"
 
     def _create_executive_summary(self, deals: List[SummarizedDeal]) -> str:
         """Create executive summary"""
@@ -401,8 +409,21 @@ Requirements:
                 except:
                     pass
 
-        summary = f"This week we tracked {total_deals} significant deals across "
-        summary += ", ".join([f"{count} {deal_type}" for deal_type, count in deal_types.items()])
+        # Create more inclusive language
+        deal_type_names = {
+            'VC': 'Venture Capital',
+            'M&A': 'M&A',
+            'IPO': 'Public Offering',
+            'IB': 'Investment Banking'
+        }
+        
+        deal_descriptions = []
+        for deal_type, count in deal_types.items():
+            type_name = deal_type_names.get(deal_type, deal_type)
+            deal_descriptions.append(f"{count} {type_name}")
+        
+        summary = f"This week we tracked {total_deals} significant financial transactions across "
+        summary += ", ".join(deal_descriptions)
 
         if total_amount > 0:
             if total_amount >= 1000:
@@ -411,6 +432,8 @@ Requirements:
                 summary += f" with combined disclosed value of ${total_amount:.0f} million."
         else:
             summary += "."
+            
+        summary += " Our coverage spans mergers & acquisitions, venture capital, investment banking, and public market transactions."
 
         return summary
 

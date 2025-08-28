@@ -162,8 +162,15 @@ class ResendEmailSender:
                 payload = {
                     "from": f"{self.sender_name} <{self.sender_email}>",
                     "to": [recipient.email],
+                    "reply_to": [self.default_reply_to],
                     "subject": subject,
                     "html": html_content,
+                    "headers": {
+                        "X-Entity-ID": "newsletter",
+                        "List-Unsubscribe": f"<mailto:{self.sender_email}?subject=unsubscribe>",
+                        "List-ID": f"{self.sender_name} <newsletter.{self.sender_email.split('@')[1]}>",
+                        "Precedence": "bulk"
+                    }
                 }
                 
                 if text_content:

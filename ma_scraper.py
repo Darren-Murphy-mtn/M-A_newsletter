@@ -40,17 +40,36 @@ class FinanceNewsScraper:
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
         
-        # M&A Keywords
-        self.ma_keywords = [
+        # Comprehensive Financial Deal Keywords
+        self.deal_keywords = [
+            # M&A Terms
             'acquisition', 'acquired', 'merger', 'buyout', 'takeover', 
-            'purchase', 'deal to buy', 'agrees to buy', 'funding', 
-            'raises', 'series a', 'series b', 'series c', 'investment',
-            'venture capital', 'private equity', 'ipo', 'public offering'
+            'purchase', 'deal to buy', 'agrees to buy', 'strategic partnership',
+            'joint venture', 'spin-off', 'divestiture', 'asset sale',
+            
+            # VC/PE Terms  
+            'funding', 'raises', 'investment', 'venture capital', 'private equity',
+            'series a', 'series b', 'series c', 'series d', 'pre-seed', 'seed round',
+            'growth capital', 'expansion financing', 'mezzanine financing',
+            
+            # Investment Banking Terms
+            'underwriting', 'ipo', 'initial public offering', 'secondary offering',
+            'bond issuance', 'debt financing', 'credit facility', 'syndicated loan',
+            'leveraged buyout', 'lbo', 'restructuring', 'refinancing',
+            'rights offering', 'convertible bond', 'high yield', 'investment grade',
+            
+            # Corporate Finance
+            'capital raising', 'equity financing', 'debt restructuring',
+            'financial advisory', 'fairness opinion', 'valuation', 'due diligence',
+            'public listing', 'going public', 'delisting', 'privatization',
+            
+            # Deal Sizes & Values
+            'billion', 'million', 'valuation', 'enterprise value', 'market cap'
         ]
         
         logger.info("✅ Scraper initialized with working news sources")
 
-    def get_top_finance_stories(self, max_stories: int = 5, days_back: int = 7) -> List[Deal]:
+    def get_top_finance_stories(self, max_stories: int = 8, days_back: int = 7) -> List[Deal]:
         """Get top finance stories from working sources"""
         logger.info(f"Starting aggregation for top {max_stories} finance stories from last {days_back} days...")
         
@@ -99,25 +118,39 @@ class FinanceNewsScraper:
                     text_to_check = f"{entry.title} {entry.get('summary', '')}".lower()
                     
                     # Find matching keywords
-                    matching_keywords = [kw for kw in self.ma_keywords if kw in text_to_check]
+                    matching_keywords = [kw for kw in self.deal_keywords if kw in text_to_check]
                     
                     if matching_keywords:
-                        # Determine deal type
-                        deal_type = 'M&A'
-                        if any(word in text_to_check for word in ['funding', 'raises', 'series', 'investment']):
-                            deal_type = 'VC'
-                        elif any(word in text_to_check for word in ['ipo', 'public offering']):
-                            deal_type = 'IPO'
+                        # Enhanced deal type classification
+                        deal_type = self._classify_deal_type(text_to_check)
                         
                         # Extract amount if possible
                         amount = self._extract_amount(text_to_check)
                         
-                        # Calculate priority score
-                        priority_score = len(matching_keywords) * 2.0
+                        # Enhanced priority scoring
+                        priority_score = len(matching_keywords) * 1.5
+                        
+                        # Amount-based scoring
                         if amount:
-                            priority_score += 3.0
-                        if any(word in text_to_check for word in ['billion', 'million']):
-                            priority_score += 2.0
+                            priority_score += 4.0
+                            if 'billion' in text_to_check:
+                                priority_score += 3.0
+                            elif 'million' in text_to_check:
+                                priority_score += 2.0
+                        
+                        # Deal type multipliers
+                        if deal_type == 'IPO':
+                            priority_score += 2.5  # IPOs are always significant
+                        elif deal_type == 'IB':
+                            priority_score += 2.0  # IB deals are important
+                        elif deal_type == 'M&A':
+                            priority_score += 1.5
+                        elif deal_type == 'VC':
+                            priority_score += 1.0
+                        
+                        # Source credibility boost
+                        if source_name.lower() in ['bloomberg', 'reuters']:
+                            priority_score += 1.0
                         
                         deal = Deal(
                             title=entry.title,
@@ -141,6 +174,55 @@ class FinanceNewsScraper:
             logger.error(f"Error fetching {source_name} RSS: {e}")
         
         return deals
+    
+    def _classify_deal_type(self, text: str) -> str:
+        """Enhanced deal type classification"""
+        text = text.lower()
+        
+        # Investment Banking indicators (check first - most specific)
+        ib_indicators = [
+            'underwriting', 'bond issuance', 'debt financing', 'credit facility',
+            'syndicated loan', 'restructuring', 'refinancing', 'rights offering',
+            'convertible bond', 'high yield', 'investment grade', 'financial advisory'
+        ]
+        
+        # IPO indicators
+        ipo_indicators = [
+            'ipo', 'initial public offering', 'going public', 'public listing',
+            'secondary offering', 'public debut', 'stock market debut'
+        ]
+        
+        # VC/PE indicators
+        vc_indicators = [
+            'funding', 'raises', 'series a', 'series b', 'series c', 'series d',
+            'pre-seed', 'seed round', 'venture capital', 'growth capital',
+            'expansion financing', 'investment round'
+        ]
+        
+        # M&A indicators
+        ma_indicators = [
+            'acquisition', 'acquired', 'merger', 'buyout', 'takeover',
+            'purchase', 'deal to buy', 'agrees to buy', 'leveraged buyout',
+            'lbo', 'strategic partnership', 'joint venture', 'privatization'
+        ]
+        
+        # Check in order of specificity
+        if any(indicator in text for indicator in ib_indicators):
+            return 'IB'
+        elif any(indicator in text for indicator in ipo_indicators):
+            return 'IPO'
+        elif any(indicator in text for indicator in vc_indicators):
+            return 'VC'
+        elif any(indicator in text for indicator in ma_indicators):
+            return 'M&A'
+        else:
+            # Default classification based on context
+            if 'private equity' in text:
+                return 'M&A'
+            elif 'investment' in text:
+                return 'VC'
+            else:
+                return 'M&A'  # Default fallback
 
     def _extract_amount(self, text: str) -> Optional[str]:
         """Extract dollar amounts from text"""
@@ -163,36 +245,66 @@ class FinanceNewsScraper:
         return None
 
     def _get_sample_deals(self) -> List[Deal]:
-        """Sample deals for testing when no real deals found"""
+        """Sample deals for testing when no real deals found - covering all deal types"""
         return [
+            Deal(
+                title="Goldman Sachs Leads $3.2B IPO for Clean Energy Company",
+                description="Goldman Sachs and JPMorgan underwrite $3.2 billion IPO for renewable energy infrastructure company, marking the largest clean tech public offering this year.",
+                source="Sample Data",
+                url="https://example.com/deal1",
+                date=datetime.now().strftime('%Y-%m-%d'),
+                deal_type="IB",
+                amount="$3.2 billion",
+                priority_score=9.5
+            ),
             Deal(
                 title="Microsoft Explores $15B AI Acquisition",
                 description="Tech giant Microsoft reportedly in talks to acquire leading AI company for $15 billion to strengthen cloud services.",
                 source="Sample Data",
-                url="https://example.com/deal1",
+                url="https://example.com/deal2",
                 date=datetime.now().strftime('%Y-%m-%d'),
                 deal_type="M&A",
                 amount="$15 billion",
                 priority_score=8.5
             ),
             Deal(
-                title="Healthcare Tech Company Raises $2.5B in Series D",
-                description="Major healthcare technology startup raises $2.5 billion in Series D funding round led by prominent investors.",
-                source="Sample Data", 
-                url="https://example.com/deal2",
+                title="Morgan Stanley Structures $5B Syndicated Loan",
+                description="Morgan Stanley leads consortium in structuring $5 billion syndicated credit facility for major infrastructure development project.",
+                source="Sample Data",
+                url="https://example.com/deal3",
                 date=datetime.now().strftime('%Y-%m-%d'),
-                deal_type="VC",
-                amount="$2.5 billion",
-                priority_score=7.8
+                deal_type="IB",
+                amount="$5 billion",
+                priority_score=8.8
             ),
             Deal(
-                title="Private Equity Firm Completes $800M Buyout",
-                description="Leading private equity firm completes $800 million acquisition of fintech company specializing in digital payments.",
+                title="Biotech Startup Raises $1.8B in Series C",
+                description="Revolutionary biotech company developing gene therapies raises $1.8 billion in Series C funding round led by top venture firms.",
+                source="Sample Data", 
+                url="https://example.com/deal4",
+                date=datetime.now().strftime('%Y-%m-%d'),
+                deal_type="VC",
+                amount="$1.8 billion",
+                priority_score=8.1
+            ),
+            Deal(
+                title="EV Manufacturer Plans $2.1B IPO",
+                description="Electric vehicle manufacturer announces plans for $2.1 billion initial public offering, seeking to capitalize on growing EV market.",
                 source="Sample Data",
-                url="https://example.com/deal3", 
+                url="https://example.com/deal5",
+                date=datetime.now().strftime('%Y-%m-%d'),
+                deal_type="IPO",
+                amount="$2.1 billion",
+                priority_score=8.0
+            ),
+            Deal(
+                title="Private Equity Completes $900M Healthcare Buyout",
+                description="Leading private equity firm completes $900 million acquisition of specialty healthcare services company.",
+                source="Sample Data",
+                url="https://example.com/deal6", 
                 date=datetime.now().strftime('%Y-%m-%d'),
                 deal_type="M&A",
-                amount="$800 million",
+                amount="$900 million",
                 priority_score=7.2
             )
         ]

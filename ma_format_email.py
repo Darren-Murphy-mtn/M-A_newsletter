@@ -579,15 +579,26 @@ class HTMLEmailFormatter:
             </div>
         """
 
-    def _create_footer(self) -> str:
-        """Create email footer"""
+    def _create_footer(self, sender_email: str = "newsletter@darren-murphy.com") -> str:
+        """Create email footer with proper unsubscribe links"""
 
-        return """
+        return f"""
         </div>
         <div class="footer">
-            <p>This newsletter was generated automatically from verified financial news sources.</p>
-            <p>Questions? Reply to this email or contact our team.</p>
-            <p><a href="#" target="_blank">Unsubscribe</a> | <a href="#" target="_blank">Update Preferences</a></p>
+            <div class="unsubscribe-section">
+                <p><strong>📧 Manage Your Subscription</strong></p>
+                <p>To unsubscribe, simply reply to this email with "UNSUBSCRIBE" in the subject line.</p>
+                <p>You can also email us directly: <a href="mailto:{sender_email}?subject=Unsubscribe%20Request">unsubscribe@darren-murphy.com</a></p>
+            </div>
+            
+            <p><strong>{self.company_name}</strong> - Professional M&A Intelligence</p>
+            <p>This newsletter contains curated financial news from verified sources including Reuters, Bloomberg, and CNBC.</p>
+            <p>© 2024 Darren Murphy. All rights reserved.</p>
+            
+            <p style="font-size: 12px; color: #9ca3af; margin-top: 20px;">
+                This email was sent to you because you subscribed to our M&A newsletter. 
+                We respect your privacy and will never share your information.
+            </p>
         </div>
         """
 

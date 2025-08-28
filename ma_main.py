@@ -1,8 +1,8 @@
 
 #!/usr/bin/env python3
 """
-M&A Newsletter Pipeline - Clean & Focused
-Flow: Cron -> Scrape Reuters -> Identify Deals -> OpenAI Summarize -> Format -> Supabase Subscribers -> Resend -> Send
+Financial Markets Newsletter Pipeline - Comprehensive Coverage
+Flow: Cron -> Scrape News Sources -> Identify Deals (M&A, VC, IB, IPO) -> OpenAI Summarize -> Format -> Supabase Subscribers -> Resend -> Send
 """
 
 import logging
@@ -26,20 +26,20 @@ logger = logging.getLogger(__name__)
 
 def run_ma_newsletter_pipeline():
     """
-    Main M&A Newsletter Pipeline
-    Cron -> Scrape -> Identify -> Summarize -> Format -> Get Subscribers -> Send
+    Main Financial Markets Newsletter Pipeline
+    Cron -> Scrape -> Identify (M&A, VC, IB, IPO) -> Summarize -> Format -> Get Subscribers -> Send
     """
-    logger.info("🚀 M&A Newsletter Pipeline Starting...")
+    logger.info("🚀 Financial Markets Newsletter Pipeline Starting...")
 
     # Step 1: Scrape Reuters for deals
-    logger.info("📰 Scraping Reuters for M&A deals...")
+    logger.info("📰 Scraping financial news sources for deals...")
     scraper = FinanceNewsScraper()
-    deals = scraper.get_top_finance_stories()
+    deals = scraper.get_top_finance_stories(max_stories=8)  # Get more diverse deals
     
     if not deals:
         logger.warning("❌ No deals found. Exiting pipeline.")
         return False
-    logger.info(f"✅ Scraped {len(deals)} deals from Reuters")
+    logger.info(f"✅ Scraped {len(deals)} deals from financial news sources")
 
     # Step 2: Send to OpenAI for summarization
     logger.info("🤖 Sending deals to OpenAI for summarization...")
@@ -54,7 +54,7 @@ def run_ma_newsletter_pipeline():
     # Step 3: Format email content
     logger.info("📧 Formatting email content...")
     content = summarizer.create_newsletter_content(summarized)
-    formatter = HTMLEmailFormatter(company_name="M&A Newsletter", brand_color="#1a365d")
+    formatter = HTMLEmailFormatter(company_name="Financial Markets Newsletter", brand_color="#1a365d")
     html_email = formatter.create_newsletter_html(content)
     text_email = formatter.create_text_version(content)
     logger.info("✅ Email formatted")
@@ -92,7 +92,9 @@ def run_ma_newsletter_pipeline():
     logger.info("📤 Sending via Resend...")
     sender = ResendEmailSender()
     recipients = [EmailRecipient(email=email) for email in subscriber_emails]
-    subject = content.get("headline", "Your Weekly M&A Newsletter")
+    # Create a more inclusive and deliverable subject line
+    deals_count = len(summarized)
+    subject = f"📊 {deals_count} Key Financial Deals This Week - {content.get('headline', 'Weekly Financial Markets Newsletter')}"
 
     results = sender.send_newsletter(
         recipients=recipients,
