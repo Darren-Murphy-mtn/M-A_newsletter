@@ -4,7 +4,7 @@ name: M&A Newsletter Pipeline
 on:
   schedule:
     # Run every day at 8:00 AM UTC (adjust timezone as needed)
-    - cron: '0 8 * * *'
+    - cron: '0 12 * * *'
   workflow_dispatch:  # Allow manual triggering
 
 jobs:
